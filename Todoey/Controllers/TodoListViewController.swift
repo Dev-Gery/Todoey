@@ -10,25 +10,33 @@ import UIKit
 import CoreData
 
 class TodoListViewController: UITableViewController {
-    var todoItems : [TodoItem]!
+    var todoItems = [TodoItem]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-        
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        loadData()
+    
+    func saveData() {
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error)")
+        }
     }
     
-    func loadData() {
-        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+    func loadData(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()) {
         do {
             todoItems = try context.fetch(request)
         } catch {
             print("Error fetching data from context: \(error)")
         }
+        tableView.reloadData()
     }
     
-    //MARK - TableView DataSource Method
+    override func viewDidLoad() {
+        super.viewDidLoad()
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        loadData()
+    }
+    
+    //MARK: TableView DataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return todoItems.count
     }
@@ -41,7 +49,7 @@ class TodoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK - TableView Delegate Method
+    //MARK: TableView Delegate
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         todoItems[indexPath.row].done = !todoItems[indexPath.row].done
@@ -50,15 +58,8 @@ class TodoListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    func saveData() {
-        do {
-            try context.save()
-        } catch {
-            print("Error saving context: \(error)")
-        }
-    }
     
-    //MARK - Add New Item
+    //MARK: Add New Item
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         alert.addTextField { alertTextField in
@@ -67,8 +68,7 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add item", style: .default) { act in
             print("Success!")
             if let txt = alert.textFields?[0].text {
-                if !txt.isEmpty {
-
+                if txt.contains(/[\w]/) {
                     let newTodoItem = TodoItem(context: self.context)
                     newTodoItem.title = txt
                     self.todoItems.append(newTodoItem)
@@ -80,6 +80,32 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
+    
+}
 
+extension TodoListViewController: UISearchBarDelegate {
+    //MARK: SearchBar Delegate
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text!.contains(/[\w]/) {
+            let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            loadData(with: request)
+        } else {
+            loadData()
+        }
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        DispatchQueue.main.async {
+            searchBar.resignFirstResponder()
+        }
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        DispatchQueue.main.async {
+            searchBar.resignFirstResponder()
+        }
+    }
 }
 
