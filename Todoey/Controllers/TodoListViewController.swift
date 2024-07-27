@@ -7,31 +7,26 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
-    var todoItems = [TodoItem]()
-//    let dataFilePath = FileMaager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appe*/ndingPathComponent("TodoItems.plist")
+    var todoItems : [TodoItem]!
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
         
     override func viewDidLoad() {
         super.viewDidLoad()
-//        loadData()
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        loadData()
     }
     
-//    func loadData() {
-//        if let data = try? Data(contentsOf: (dataFilePath ?? URL(string: "")) ?? URL(string: "")!) {
-//            let decoder = PropertyListDecoder()
-//            do {
-//                todoItems = try decoder.decode([TodoItem].self, from: data)
-//            } catch {
-//                print("Error decoding data: \(error)")
-//            }
-//        }
-//        else {
-//            todoItems.append(TodoItem(title: "Study iOS Dev"))
-//            todoItems.append(TodoItem(title: "Breakfast"))
-//            todoItems.append(TodoItem(title: "Contact Stephanie"))
-//        }
-//    }
+    func loadData() {
+        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        do {
+            todoItems = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
+        }
+    }
     
     //MARK - TableView DataSource Method
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -50,20 +45,18 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         todoItems[indexPath.row].done = !todoItems[indexPath.row].done
-//        saveData()
+        saveData()
         tableView.reloadRows(at: [indexPath], with: .automatic)
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
-//    func saveData() {
-//        let encoder = PropertyListEncoder()
-//        do {
-//            let data = try encoder.encode(self.todoItems)
-//            try data.write(to: self.dataFilePath!)
-//        } catch {
-//            print("Error encoding item array, \(error)")
-//        }
-//    }
+    func saveData() {
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error)")
+        }
+    }
     
     //MARK - Add New Item
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -75,11 +68,11 @@ class TodoListViewController: UITableViewController {
             print("Success!")
             if let txt = alert.textFields?[0].text {
                 if !txt.isEmpty {
-                    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-                    let newTodoItem = TodoItem(context: context)
+
+                    let newTodoItem = TodoItem(context: self.context)
                     newTodoItem.title = txt
                     self.todoItems.append(newTodoItem)
-//                    self.saveData()
+                    self.saveData()
                     self.tableView.reloadData()
                 }
             }
