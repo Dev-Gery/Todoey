@@ -12,6 +12,27 @@ import CoreData
 class TodoListViewController: UITableViewController {
     var todoItems = [TodoItem]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var selectedCategory: TodoCategory? {
+        didSet {
+            loadItemsInCategory()
+        }
+    }
+    
+    
+    func loadData(with request: NSFetchRequest<TodoItem>) {
+        do {
+            todoItems = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
+        }
+        tableView.reloadData()
+    }
+    
+    func loadItemsInCategory() {
+        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        request.predicate = NSPredicate(format: "category == %@", selectedCategory!)
+        loadData(with: request)
+    }
     
     func saveData() {
         do {
@@ -21,19 +42,9 @@ class TodoListViewController: UITableViewController {
         }
     }
     
-    func loadData(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()) {
-        do {
-            todoItems = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error)")
-        }
-        tableView.reloadData()
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        loadData()
     }
     
     //MARK: TableView DataSource
@@ -71,6 +82,7 @@ class TodoListViewController: UITableViewController {
                 if txt.contains(/[\w]/) {
                     let newTodoItem = TodoItem(context: self.context)
                     newTodoItem.title = txt
+                    newTodoItem.category = self.selectedCategory
                     self.todoItems.append(newTodoItem)
                     self.saveData()
                     self.tableView.reloadData()
@@ -87,12 +99,16 @@ extension TodoListViewController: UISearchBarDelegate {
     //MARK: SearchBar Delegate
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text!.contains(/[\w]/) {
-            let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
-            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-            loadData(with: request)
+//            let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+//            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@ AND category == %@", searchBar.text!, selectedCategory!)
+//            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+//            loadData(with: request)
+            
+            //alternative using array filtering on the existing todoItems
+            todoItems = todoItems.filter { $0.title!.lowercased().contains(searchBar.text!.lowercased()) }
+            tableView.reloadData()
         } else {
-            loadData()
+            loadItemsInCategory()
         }
     }
     

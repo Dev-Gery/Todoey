@@ -16,6 +16,7 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadData()
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
     }
@@ -36,7 +37,8 @@ class CategoryViewController: UITableViewController {
             print("Error saving context: \(error)")
         }
     }
-
+    
+    // MARK: Add New Category
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "New Category", message: "", preferredStyle: .alert)
         
@@ -44,12 +46,15 @@ class CategoryViewController: UITableViewController {
             UITextField.placeholder = "Name"
         }
         
-        alert.addAction(UIAlertAction(title: "Add Category", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Add", style: .default) { _ in
             if let inputText = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespaces) {
-                let newCategory = TodoCategory(context: self.context)
-                newCategory.name = inputText
-                self.saveData()
-                self.loadData()
+                if inputText.isEmpty {
+                    ()
+                } else {
+                    TodoCategory(context: self.context).name = inputText
+                    self.saveData()
+                    self.loadData()
+                }
             }
         })
         
@@ -72,8 +77,20 @@ class CategoryViewController: UITableViewController {
         return cell
     }
     
+    //MARK: - Table view delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        <#code#>
+        performSegue(withIdentifier: "gotoItems", sender: self)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "gotoItems" {
+            let destinationVC = segue.destination as! TodoListViewController
+            if let indexPath = tableView.indexPathForSelectedRow {
+                destinationVC.selectedCategory = categories[indexPath.row]
+            }
+        } else {
+            ()
+        }
     }
 
     /*
