@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import ChameleonFramework
 
 class CategoryViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
@@ -21,12 +22,18 @@ class CategoryViewController: UITableViewController {
         // self.clearsSelectionOnViewWillAppear = false
     }
     
-    func loadData(with request: NSFetchRequest<TodoCategory> = TodoCategory.fetchRequest()) {
+    func loadData(with request: NSFetchRequest<TodoCategory>) {
         do {
             categories = try context.fetch(request)
         } catch {
             print("Error fetching data from context: \(error)")
         }
+        tableView.reloadData()
+    }
+    
+    func loadData() {
+        let request: NSFetchRequest<TodoCategory> = TodoCategory.fetchRequest()
+        loadData(with: request)
         tableView.reloadData()
     }
     
@@ -51,7 +58,9 @@ class CategoryViewController: UITableViewController {
                 if inputText.isEmpty {
                     ()
                 } else {
-                    TodoCategory(context: self.context).name = inputText
+                    let newCategory = TodoCategory(context: self.context)
+                    newCategory.name = inputText
+                    newCategory.hexcolour = UIColor.randomFlat().hexValue()
                     self.saveData()
                     self.loadData()
                 }
@@ -74,12 +83,23 @@ class CategoryViewController: UITableViewController {
         var content = cell.defaultContentConfiguration()
         content.text = categories[indexPath.row].name
         cell.contentConfiguration = content
+        cell.backgroundColor = UIColor.init(hexString: categories[indexPath.row].hexcolour ?? "#007AFF")
         return cell
     }
     
     //MARK: - Table view delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "gotoItems", sender: self)
+    }
+    
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completionHandler in
+            self.context.delete(self.categories[indexPath.row])
+            self.categories.remove(at: indexPath.row)
+            self.saveData()
+            self.loadData()
+        }
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -92,15 +112,6 @@ class CategoryViewController: UITableViewController {
             ()
         }
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    
+    
 }

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="TodoCategory" representedClassName=".TodoCategory" syncable="YES" codeGenerationType="class">
+        <attribute name="hexcolour" optional="YES" attributeType="String"/>
         <attribute name="name" attributeType="String" customClassName="."/>
-        <relationship name="contains" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TodoItem" inverseName="category" inverseEntity="TodoItem"/>
+        <relationship name="contains" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TodoItem" inverseName="category" inverseEntity="TodoItem"/>
     </entity>
     <entity name="TodoItem" representedClassName=".TodoItem" syncable="YES" codeGenerationType="class">
         <attribute name="done" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="title" attributeType="String"/>
-        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TodoCategory" inverseName="contains" inverseEntity="TodoCategory"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="No Action" destinationEntity="TodoCategory" inverseName="contains" inverseEntity="TodoCategory"/>
     </entity>
 </model>

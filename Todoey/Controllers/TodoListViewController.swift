@@ -8,13 +8,15 @@
 
 import UIKit
 import CoreData
+import ChameleonFramework
 
 class TodoListViewController: UITableViewController {
     var todoItems = [TodoItem]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     var selectedCategory: TodoCategory? {
         didSet {
-            loadItemsInCategory()
+            loadData()
+            navigationItem.title = selectedCategory?.name
         }
     }
     
@@ -28,7 +30,7 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadItemsInCategory() {
+    func loadData() {
         let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
         request.predicate = NSPredicate(format: "category == %@", selectedCategory!)
         loadData(with: request)
@@ -44,6 +46,7 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationController?.navigationBar.scrollEdgeAppearance?.backgroundColor = UIColor(hexString: (selectedCategory?.hexcolour) ?? "#007AFF")
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
@@ -52,11 +55,38 @@ class TodoListViewController: UITableViewController {
         return todoItems.count
     }
     
+    //MARK: Cell Accessory View
+    class CustomCheckmarkView: UIImageView {
+        init(color: UIColor) {
+            super.init(frame: .zero)
+            let image = UIImage(systemName: "checkmark")?.withTintColor(color, renderingMode: .alwaysOriginal)
+            self.image = image
+            self.contentMode = .scaleAspectFit
+            self.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                self.widthAnchor.constraint(equalToConstant: 24),
+                self.heightAnchor.constraint(equalToConstant: 24)
+            ])
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         let item = todoItems[indexPath.row]
         cell.textLabel?.text = item.title
-        cell.accessoryType = item.done ? .checkmark : .none
+//        cell.accessoryType = item.done ? .checkmark : .none
+        let color = UIColor(hexString: (selectedCategory?.hexcolour) ?? "#007AFF")
+        
+        cell.backgroundColor = color?.darken(byPercentage: CGFloat(Float(indexPath.row) / Float(todoItems.count)) )
+        
+        let backgroundContrastColor = UIColor(contrastingBlackOrWhiteColorOn: cell.backgroundColor!, isFlat: true)
+        
+        cell.textLabel?.textColor = backgroundContrastColor
+        cell.accessoryView = item.done ? CustomCheckmarkView(color: backgroundContrastColor) : .none
         return cell
     }
     
@@ -67,6 +97,16 @@ class TodoListViewController: UITableViewController {
         saveData()
         tableView.reloadRows(at: [indexPath], with: .automatic)
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completionHandler in
+            self.context.delete(self.todoItems[indexPath.row])
+            self.todoItems.remove(at: indexPath.row)
+            self.saveData()
+            self.loadData()
+        }
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
     
     
@@ -108,7 +148,7 @@ extension TodoListViewController: UISearchBarDelegate {
             todoItems = todoItems.filter { $0.title!.lowercased().contains(searchBar.text!.lowercased()) }
             tableView.reloadData()
         } else {
-            loadItemsInCategory()
+            loadData()
         }
     }
     
