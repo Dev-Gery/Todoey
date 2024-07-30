@@ -13,13 +13,65 @@ import ChameleonFramework
 class TodoListViewController: UITableViewController {
     var todoItems = [TodoItem]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var navigation: UINavigationController?
+    
+    @IBOutlet weak var searchBar: UISearchBar!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.separatorStyle = .none
+        //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        guard let navbar = navigationController?.navigationBar else { fatalError("Navigation Controller is nil")}
+        
+        let categoryColor = UIColor(hexString: (selectedCategory?.hexcolour) ?? "#007AFF")
+        
+        let contrastCategoryColor = UIColor(contrastingBlackOrWhiteColorOn: categoryColor!, isFlat: true)
+        
+//        navBar.barTintColor = categoryColor
+        
+        navbar.tintColor = contrastCategoryColor
+        
+        searchBar.barTintColor = categoryColor
+        searchBar.searchTextField.backgroundColor = .white
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.backgroundColor = categoryColor
+        appearance.largeTitleTextAttributes = [.foregroundColor: contrastCategoryColor]
+        appearance.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+        appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+        
+        navbar.scrollEdgeAppearance = appearance
+        navbar.standardAppearance = appearance
+//        navBar.scrollEdgeAppearance?.backgroundColor = categoryColor
+//        
+//        navBar.scrollEdgeAppearance?.largeTitleTextAttributes = [.foregroundColor: contrastCategoryColor]
+//        
+//        navBar.scrollEdgeAppearance?.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+//        
+//        navBar.scrollEdgeAppearance?.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+//                
+//        navBar.standardAppearance.backgroundColor = categoryColor
+//        
+//        navBar.standardAppearance.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+//        
+//        navBar.standardAppearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: contrastCategoryColor]
+        
+        //        let appearance = UINavigationBarAppearance()
+        //
+        //        appearance.titleTextAttributes
+    }
+    
     var selectedCategory: TodoCategory? {
         didSet {
             loadData()
             navigationItem.title = selectedCategory?.name
         }
     }
-    
     
     func loadData(with request: NSFetchRequest<TodoItem>) {
         do {
@@ -44,11 +96,6 @@ class TodoListViewController: UITableViewController {
         }
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        navigationController?.navigationBar.scrollEdgeAppearance?.backgroundColor = UIColor(hexString: (selectedCategory?.hexcolour) ?? "#007AFF")
-//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-    }
     
     //MARK: TableView DataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

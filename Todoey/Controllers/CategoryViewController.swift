@@ -22,6 +22,25 @@ class CategoryViewController: UITableViewController {
         // self.clearsSelectionOnViewWillAppear = false
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        guard let navbar = navigationController?.navigationBar else { fatalError("Navigation Controller is nil")}
+        
+        let navbarColor = UIColor(hexString: "#007AFF")
+        let navbarContrastColor = UIColor(contrastingBlackOrWhiteColorOn: navbarColor!, isFlat: true)
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.backgroundColor = navbarColor
+        appearance.largeTitleTextAttributes = [.foregroundColor: navbarContrastColor]
+        appearance.titleTextAttributes = [.foregroundColor: navbarContrastColor]
+        appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: navbarContrastColor]
+        
+        navbar.scrollEdgeAppearance = appearance
+        navbar.standardAppearance = appearance
+    }
+    
+    
     func loadData(with request: NSFetchRequest<TodoCategory>) {
         do {
             categories = try context.fetch(request)
@@ -80,10 +99,13 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
+        cell.backgroundColor = UIColor.init(hexString: categories[indexPath.row].hexcolour ?? "#007AFF")
+        
         var content = cell.defaultContentConfiguration()
         content.text = categories[indexPath.row].name
+        content.textProperties.color = UIColor(contrastingBlackOrWhiteColorOn: cell.backgroundColor!, isFlat: true)
+        
         cell.contentConfiguration = content
-        cell.backgroundColor = UIColor.init(hexString: categories[indexPath.row].hexcolour ?? "#007AFF")
         return cell
     }
     
